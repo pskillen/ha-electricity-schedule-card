@@ -1,0 +1,9 @@
+# Build files
+dist/
+lovelace/
+
+# Node and NPM files
+node_modules/
+
+# Secrets
+.env

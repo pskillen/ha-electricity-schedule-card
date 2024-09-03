@@ -1,0 +1,67 @@
+{
+  "name": "electricity-schedule-card",
+  "version": "0.1.0",
+  "description": "A Lovelace card for Home Assistant, which displays the scheduled of your high power devices (EV charging, heating, hot water, etc) in a timeline",
+  "module": "electricity-schedule-card.js",
+  "scripts": {
+    "start": "rollup -c rollup.config.dev.js --watch",
+    "build": "npm run build:types-check && npm run lint && npm run rollup",
+    "build:types-check": "ts-interface-builder src/types-config.ts",
+    "rollup": "rollup -c",
+    "lint": "eslint src/*.ts",
+    "watch": "npm run build:types-check && rollup -c --watch",
+    "postversion": "npm run build"
+  },
+  "keywords": [
+    "home-assistant",
+    "homeassistant",
+    "hass",
+    "automation",
+    "lovelace",
+    "custom-cards"
+  ],
+  "author": {
+    "name": "Patrick Skillen",
+    "email": "pskillen@gmail.com"
+  },
+  "license": "LGPL-3.0-or-later",
+  "dependencies": {
+    "@lit-labs/scoped-registry-mixin": "^1.0.3",
+    "@material/mwc-formfield": "^0.27.0",
+    "@material/mwc-list": "^0.27.0",
+    "@material/mwc-menu": "^0.27.0",
+    "@material/mwc-notched-outline": "^0.27.0",
+    "@material/mwc-ripple": "^0.27.0",
+    "@material/mwc-select": "^0.27.0",
+    "@material/mwc-switch": "^0.27.0",
+    "@material/mwc-textfield": "^0.27.0",
+    "custom-card-helpers": "^1.9.0",
+    "lit": "^3.2.0",
+    "lit-element": "^4.1.0",
+    "@lit/reactive-element": "^2.0.4"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@babel/preset-env": "^7.25.4",
+    "@babel/preset-typescript": "^7.24.7",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-commonjs": "^26.0.1",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@typescript-eslint/eslint-plugin": "^8.4.0",
+    "@typescript-eslint/parser": "^8.4.0",
+    "eslint": "^9.9.1",
+    "rollup-plugin-serve": "^1.1.1",
+    "rollup-plugin-typescript2": "^0.36.0",
+    "ts-interface-builder": "^0.3.3",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.5.4"
+  },
+  "resolutions": {
+    "lit": "^3.2.0",
+    "lit-html": "3.2.0",
+    "lit-element": "4.1.0",
+    "@lit/reactive-element": "2.0.4"
+  }
+}
