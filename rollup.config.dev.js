@@ -14,6 +14,7 @@ export default {
     dir: './lovelace',
     format: 'es',
   },
+  context: 'window',
   plugins: [
     resolve({
       extensions: ['.js', '.ts'],

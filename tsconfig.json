@@ -1,10 +1,10 @@
 {
   "compilerOptions": {
-    "target": "es2017",
-    "module": "esnext",
+    "target": "ES2020",
+    "module": "ES2020",
     "moduleResolution": "node",
     "lib": [
-      "es2017",
+      "ES2020",
       "dom",
       "dom.iterable"
     ],
@@ -18,7 +18,8 @@
     "resolveJsonModule": true,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "./lovelace"
+    "outDir": "./lovelace",
+    "allowSyntheticDefaultImports": true
   },
   "include": [
     "src/**/*"
