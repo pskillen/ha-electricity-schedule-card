@@ -1,5 +1,3 @@
-import {Moment} from "moment";
-
 export type OctopusRate = {
   start: string;
   startDate?: Date;

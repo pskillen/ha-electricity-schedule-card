@@ -1,4 +1,4 @@
-import {css, CSSResultGroup, html, LitElement, PropertyValues, TemplateResult} from 'lit';
+import {CSSResultGroup, html, LitElement, PropertyValues, TemplateResult} from 'lit';
 import {customElement, property, state} from 'lit/decorators.js';
 import {
   ActionHandlerEvent,
@@ -40,7 +40,6 @@ console.info(
 export class ElectricityScheduleCard extends LitElement {
   public static async getConfigElement(): Promise<LovelaceCardEditor> {
     await import('./editor');
-    // @ts-ignore
     return document.createElement('electricity-schedule-card-editor');
   }
 
@@ -138,9 +137,10 @@ export class ElectricityScheduleCard extends LitElement {
     //   origConfig: this.config,
     // });
 
-    return html`<ha-error-card>
-      ${message}
-    </ha-error-card>`;
+    return html`
+      <ha-error-card>
+        ${message}
+      </ha-error-card>`;
   }
 
   static get styles(): CSSResultGroup {

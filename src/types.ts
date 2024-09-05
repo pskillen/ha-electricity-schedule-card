@@ -6,4 +6,3 @@ declare global {
     'hui-error-card': LovelaceCard;
   }
 }
-
