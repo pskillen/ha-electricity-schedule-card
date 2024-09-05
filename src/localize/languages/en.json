@@ -4,5 +4,8 @@
     "invalid_configuration": "Invalid configuration",
     "show_warning": "Show Warning",
     "show_error": "Show Error"
+  },
+  "states": {
+    "active": "On"
   }
 }

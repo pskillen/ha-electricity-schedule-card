@@ -6,7 +6,9 @@ export interface ColumnConfig {
   time_entity?: string;
   time_entities?: string[];
   active_color?: string;
+  active_text?: string;
   inactive_color?: string;
+  inactive_text?: string;
   disabled?: boolean;
   max_price_entity?: string;
   min_price_entity?: string;
