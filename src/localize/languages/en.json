@@ -5,7 +5,13 @@
     "show_warning": "Show Warning",
     "show_error": "Show Error"
   },
+  "headers": {
+    "time": "Time",
+    "import": "Import",
+    "export": "Export"
+  },
   "states": {
-    "active": "On"
+    "active": "On",
+    "inactive": ""
   }
 }

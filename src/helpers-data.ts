@@ -1,7 +1,15 @@
 import {HomeAssistant} from "custom-card-helpers";
 import moment from "moment/moment";
 import {OctopusRate, OctopusRatesEntryAttributes} from "./types-sensors";
-import {CardConfig, CellProps, ColumnConfig, ColumnData, DisplayData, RowProps} from "./types-card";
+import {
+  CardConfig,
+  CellProps,
+  ColumnConfig,
+  ColumnData,
+  DisplayData,
+  ElectricitySupplyConfig,
+  RowProps
+} from "./types-card";
 import {getOctopusRatesSensor, getSensorState, parseTimeEntity} from "./helpers-ha";
 import {localize} from "./localize/localize";
 
@@ -30,17 +38,6 @@ export function generateColumnData(hass: HomeAssistant, columnConfig: ColumnConf
     return true;
   };
 
-  function generateColumnHeader(colName: string, maxPrice?: number, minPrice?: number) {
-    if (minPrice && maxPrice)
-      return `${colName}<br>&gt;${minPrice}, &lt;${maxPrice}`;
-    if (minPrice)
-      return `${colName}<br>&gt;${minPrice}`;
-    if (maxPrice)
-      return `${colName}<br>&lt;${maxPrice}`;
-
-    return `${colName}`;
-  }
-
   let maxPrice: number | undefined;
   let minPrice: number | undefined;
   let maxExportPrice: number | undefined;
@@ -68,102 +65,119 @@ export function generateColumnData(hass: HomeAssistant, columnConfig: ColumnConf
   }
 
   const enabled = isColumnActive(columnConfig);
-  const headerText = generateColumnHeader(columnConfig.name, maxPrice, minPrice);
-
   const timeEntities = columnConfig.time_entity
     ? [columnConfig.time_entity]
     : columnConfig.time_entities;
 
-  const activeTimes = timeEntities?.map(entityName => {
-    const {start, end} = parseTimeEntity(hass, entityName);
-    return {start: moment(start), end: moment(end)};
-  });
+  const activeTimes = timeEntities?.map(entityName => parseTimeEntity(hass, entityName));
 
   return {
     ...columnConfig,
     enabled,
-    headerText,
     maxPrice, minPrice,
     maxExportPrice, minExportPrice,
     time_entity: undefined, time_entities: timeEntities, activeTimes,
   };
 }
 
-function combineAndFilterRateArrays(rateAttributes: (OctopusRatesEntryAttributes | undefined)[], includePast: boolean, includeFuture: boolean): OctopusRate[] {
-  let combinedRates: OctopusRate[] = [];
-  const now = moment();
+export function calculateTableData(hass: HomeAssistant, config: CardConfig): DisplayData {
+  const now = new Date();
 
-  // combine all the rates
-  for (const rateAttribute of rateAttributes) {
-    if (!rateAttribute) continue;
-    rateAttribute.rates.forEach(rate => combinedRates.push(rate));
+  function combineAndFilterRateArrays(rateAttributes: (OctopusRatesEntryAttributes | undefined)[], includePast: boolean, includeFuture: boolean): OctopusRate[] {
+    let combinedRates: OctopusRate[] = [];
+
+    // combine all the rates
+    for (const rateAttribute of rateAttributes) {
+      if (!rateAttribute) continue;
+      rateAttribute.rates.forEach(rate => combinedRates.push(rate));
+    }
+
+    // parse strings to dates
+    combinedRates.forEach(rate => {
+      rate.startDate = moment(rate.start).toDate();
+      rate.endDate = moment(rate.end).toDate();
+    })
+
+    // apply filters
+    combinedRates = combinedRates.filter(rate => {
+      if (!includePast && rate.endDate! < now)
+        return false;
+      if (!includeFuture && rate.startDate! > now)
+        return false;
+      return true;
+    })
+
+    // sort by date
+    combinedRates.sort((a, b) => a.startDate!.getTime() - b.startDate!.getTime());
+
+    return combinedRates;
   }
 
-  // parse strings to dates
-  combinedRates.forEach(rate => {
-    rate.startDate = moment(rate.start);
-    rate.endDate = moment(rate.end);
-  })
+  function generateTimeSlotRow(time: Date, columns: ColumnData[], importRate?: OctopusRate, exportRate?: OctopusRate): RowProps {
 
-  // apply filters
-  combinedRates = combinedRates.filter(rate => {
-    if (!includePast && rate.endDate!.isBefore(now))
-      return false;
-    if (!includeFuture && rate.startDate!.isAfter(now))
-      return false;
-    return true;
-  })
+    function generateCellData(col: ColumnData) {
 
-  // sort by date
-  combinedRates.sort((a, b) => a.startDate!.diff(b.startDate!));
+      const isActiveTime = col.activeTimes
+        ? col.activeTimes?.some(slot => slot.start <= time && time < slot.end)
+        : undefined;
+      let isActiveCost: boolean | undefined;
 
-  return combinedRates;
-}
+      const importPriceP = importRate ? importRate.value_inc_vat * 100 : undefined;
 
-export function calculateTableData(hass: HomeAssistant, config: CardConfig): DisplayData {
-
-  function generateTimeSlotRow(time: moment.Moment, columns: ColumnData[], importRate?: OctopusRate, exportRate?: OctopusRate): RowProps {
-    const cells: CellProps[] = columns.map(col => {
-
-      const isActiveTime = col.activeTimes?.some(slot => slot.start <= time && time < slot.end);
-      let isActiveCost: boolean;
-      if (!importRate || importRate.value_inc_vat == null)
-        isActiveCost = false;
+      // TODO: How do we handle export price here?
+      if (importPriceP == null)
+        isActiveCost = undefined;
       else if (col.minPrice != null && col.maxPrice != null)
-        isActiveCost = col.minPrice <= importRate.value_inc_vat && importRate.value_inc_vat <= col.maxPrice;
+        isActiveCost = col.minPrice <= importPriceP && importPriceP <= col.maxPrice;
       else if (col.minPrice != null)
-        isActiveCost = col.minPrice <= importRate.value_inc_vat;
+        isActiveCost = importPriceP >= col.minPrice;
       else if (col.maxPrice != null)
-        isActiveCost = importRate.value_inc_vat <= col.maxPrice;
+        isActiveCost = importPriceP <= col.maxPrice;
       else
         isActiveCost = false;
 
+      let cellActive: boolean;
+      if (isActiveTime == null && isActiveCost == null)
+        cellActive = false;
+      else if (isActiveTime && isActiveCost)
+        cellActive = true;
+      else if (isActiveTime == null)
+        cellActive = isActiveCost!;
+      else if (isActiveCost == null)
+        cellActive = isActiveTime!;
+      else
+        cellActive = false;
+
       let text: string;
-      if (isActiveCost || isActiveTime) {
+      if (cellActive) {
         if (col.active_text)
           text = col.active_text;
         if (col.power != null)
-          text = `${(col.power / 1000).toFixed(1)} kW`;
+          text = `${(col.power / 1000).toFixed(config.power_decimals)} kW`;
         else
           text = localize('states.active');
       } else {
         if (col.inactive_text)
           text = col.inactive_text;
         else
-          text = '';
+          // text = `iac=${isActiveCost}, iat=${isActiveTime}, colMin=${col.minPrice}, colMax=${col.maxPrice}`;
+        text = localize('states.inactive');
       }
 
       const cell: CellProps = {
         isActiveTime,
         isActiveCost,
-        text: text,
+        text,
+        cellActive
       };
 
       return cell;
-    });
+    }
+
+    const cells: CellProps[] = columns.map(generateCellData);
 
     const totalPower = cells.map((cell, n) => {
-      if (!cell.isActiveCost || !cell.isActiveTime) return 0;
+      if (!cell.cellActive) return 0;
       return columns[n].power ?? 0;
     }).reduce((acc, val) => acc + val);
 
@@ -182,34 +196,33 @@ export function calculateTableData(hass: HomeAssistant, config: CardConfig): Dis
     };
   }
 
+  function getRateData(meter: ElectricitySupplyConfig): OctopusRate[] {
+    const pastRates = getOctopusRatesSensor(hass, meter.past_rates_entity);
+    const currentRates = getOctopusRatesSensor(hass, meter.current_rates_entity);
+    const futureRates = getOctopusRatesSensor(hass, meter.future_rates_entity);
+    return combineAndFilterRateArrays([pastRates, currentRates, futureRates], !!config.show_past, !!config.show_future);
+  }
+
   // Grab the rates which are stored as an attribute of the sensor
-  const pastImportRates = getOctopusRatesSensor(hass, config.past_rates_entity);
-  const currentImportRates = getOctopusRatesSensor(hass, config.current_rates_entity);
-  const futureImportRates = getOctopusRatesSensor(hass, config.future_rates_entity);
-  const combinedImportRates = combineAndFilterRateArrays([pastImportRates, currentImportRates, futureImportRates], !!config.show_past, !!config.show_future);
-
-  const pastExportRates = getOctopusRatesSensor(hass, config.past_export_rates_entity);
-  const currentExportRates = getOctopusRatesSensor(hass, config.current_export_rates_entity);
-  const futureExportRates = getOctopusRatesSensor(hass, config.future_export_rates_entity);
-  const combinedExportRates = combineAndFilterRateArrays([pastExportRates, currentExportRates, futureExportRates], !!config.show_past, !!config.show_future);
-
+  const combinedImportRates = getRateData(config.import_meter);
+  const combinedExportRates = config.export_meter ? getRateData(config.export_meter) : [];
 
   const columns = config.columns
     .map(col => generateColumnData(hass, col))
     .filter(col => col.enabled);
 
-  let timeSlots: moment.Moment[] = [];
+  let timeSlotsNumber: number[] = [];
   if (combinedImportRates)
-    timeSlots.push(...combinedImportRates.map(r => r.startDate!));
+    timeSlotsNumber.push(...combinedImportRates.map(r => r.startDate!.getTime()));
   if (combinedExportRates)
-    timeSlots.push(...combinedExportRates.map(r => r.startDate!));
-  timeSlots = [...new Set(timeSlots)];
+    timeSlotsNumber.push(...combinedExportRates.map(r => r.startDate!.getTime()));
+  timeSlotsNumber = [...new Set(timeSlotsNumber)].sort();
 
-  const rows = timeSlots.map(slot => {
-    const importRate = combinedImportRates.find(r => r.startDate === slot);
-    const exportRate = combinedExportRates?.find(r => r.startDate === slot);
+  const rows = timeSlotsNumber.map(slot => {
+    const importRate = combinedImportRates.find(r => r.startDate!.getTime() === slot);
+    const exportRate = combinedExportRates?.find(r => r.startDate!.getTime() === slot);
 
-    return generateTimeSlotRow(slot, columns, importRate, exportRate);
+    return generateTimeSlotRow(new Date(slot), columns, importRate, exportRate);
   });
 
   return {rows, columns}

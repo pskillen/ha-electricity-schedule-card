@@ -1,5 +1,34 @@
 import {ActionConfig, LovelaceCardConfig} from "custom-card-helpers";
-import moment from "moment";
+
+export interface CardConfig extends LovelaceCardConfig {
+  name?: string;
+  card_refresh_interval_seconds?: number;
+  show_past?: boolean;
+  show_future?: boolean;
+
+  import_meter: ElectricitySupplyConfig;
+  export_meter?: ElectricitySupplyConfig;
+
+  columns: ColumnConfig[];
+  color_config?: ColorConfig;
+
+  price_decimals?: number;
+  power_decimals?: number;
+  price_unit?: string;
+
+  test_gui?: boolean;
+  tap_action?: ActionConfig;
+  hold_action?: ActionConfig;
+  double_tap_action?: ActionConfig;
+}
+
+export interface ElectricitySupplyConfig {
+  past_rates_entity?: string;
+  current_rates_entity?: string;
+  future_rates_entity?: string;
+  high_cost: number;
+  low_cost: number;
+}
 
 export interface ColumnConfig {
   name: string;
@@ -23,32 +52,11 @@ export interface ColumnData extends ColumnConfig {
   minPrice?: number;
   maxExportPrice?: number;
   minExportPrice?: number;
-  headerText: string;
-  activeTimes?: { start: moment.Moment, end: moment.Moment } [];
+  // headerText: string;
+  activeTimes?: { start: Date, end: Date } [];
 }
 
 export type ColorConfig = { [k: string]: string };
-
-export interface CardConfig extends LovelaceCardConfig {
-  name?: string;
-  card_refresh_interval_seconds?: number;
-  past_rates_entity?: string;
-  current_rates_entity?: string;
-  future_rates_entity?: string;
-  past_export_rates_entity?: string;
-  current_export_rates_entity?: string;
-  future_export_rates_entity?: string;
-  show_past?: boolean;
-  show_future?: boolean;
-
-  columns: ColumnConfig[];
-  color_config?: ColorConfig;
-
-  test_gui?: boolean;
-  tap_action?: ActionConfig;
-  hold_action?: ActionConfig;
-  double_tap_action?: ActionConfig;
-}
 
 export type DisplayData = {
   columns: ColumnData[];
@@ -56,7 +64,7 @@ export type DisplayData = {
 }
 
 export type RowProps = {
-  startTime: moment.Moment;
+  startTime: Date;
   importPrice?: number;
   exportPrice?: number;
   cells: CellProps[];
@@ -67,6 +75,7 @@ export type RowProps = {
 export type CellProps = {
   isActiveTime?: boolean;
   isActiveCost?: boolean;
+  cellActive: boolean;
   text?: string;
 
   // color?: string;

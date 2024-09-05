@@ -2,9 +2,9 @@ import {Moment} from "moment";
 
 export type OctopusRate = {
   start: string;
-  startDate?: Moment;
+  startDate?: Date;
   end: string;
-  endDate?: Moment;
+  endDate?: Date;
   value_inc_vat: number;
   is_capped: boolean;
 }

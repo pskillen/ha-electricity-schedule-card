@@ -2,11 +2,84 @@ import {HomeAssistant} from "custom-card-helpers";
 import {HassEntity} from "home-assistant-js-websocket";
 
 import {OctopusRatesEntryAttributes} from "./types-sensors";
+import {CardConfig} from "./types-card";
+
+export function applyConfigDefaults(config: CardConfig) {
+  const defaultConfig: CardConfig = {
+    type: 'custom:electricity-schedule-card',
+    name: 'Electricity schedule',
+    import_meter: {
+      high_cost: 25,
+      low_cost: 11,
+    },
+    export_meter: {
+      high_cost: 14,
+      low_cost: 14,
+    },
+    color_config: {
+      default: 'DarkSlateGray',
+      charging: 'DarkGreen',
+      discharging: 'Crimson',
+      paused: 'CornflowerBlue',
+      peak: 'Red',
+      high: 'Orange',
+      low: 'Green',
+      negative: 'Blue',
+    },
+    power_decimals: 1,
+    price_decimals: 1,
+    price_unit: "p",
+    show_past: false,
+    show_future: true,
+    card_refresh_interval_seconds: 60,
+    columns: [],
+  }
+
+  return {
+    ...defaultConfig,
+    ...config,
+    ...{
+      import_meter: {
+        ...defaultConfig.import_meter,
+        ...config.import_meter,
+      },
+      export_meter: config.export_meter ? {
+        ...defaultConfig.export_meter,
+        ...config.export_meter,
+      } : undefined,
+      color_config: {
+        ...defaultConfig.color_config,
+        ...config.color_config ?? {}
+      }
+    }
+  }
+}
 
 export function getSensorState(hass: HomeAssistant, entityName?: string): HassEntity | undefined {
   if (!entityName) return undefined;
-  if (!(entityName in hass.states))
+  if (!(entityName in hass.states)) {
+    try {
+      // maybe this is a fixed number?
+      parseFloat(entityName);
+
+      // mock the value
+      return {
+        attributes: {},
+        context: {
+          id: "",
+          user_id: null,
+          parent_id: null
+        },
+        entity_id: "",
+        last_changed: "",
+        last_updated: "",
+        state: entityName
+      }
+    } catch (e) {
+    }
+
     throw new Error(`entity ${entityName} not found`);
+  }
 
   return hass.states[entityName];
 }

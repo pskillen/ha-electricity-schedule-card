@@ -15,8 +15,10 @@ import {actionHandler} from './action-handler-directive';
 import {localize} from './localize/localize';
 import {calculateTableData} from "./helpers-data";
 
-import {version as CARD_VERSION} from '../package.json';
 import {renderTable} from "./helpers-display";
+import {applyConfigDefaults} from "./helpers-ha";
+
+import {version as CARD_VERSION} from '../package.json';
 import {globalStyles} from "./styles";
 
 /* eslint no-console: 0 */
@@ -53,20 +55,6 @@ export class ElectricityScheduleCard extends LitElement {
 
   @state() private config!: CardConfig;
 
-  private readonly defaultConfig: CardConfig = {
-    type: 'custom:electricity-schedule-card',
-    name: 'Electricity schedule',
-    color_config: {
-      default: 'DarkSlateGray',
-      charging: 'DarkGreen',
-      discharging: 'Crimson',
-      paused: 'CornflowerBlue',
-    },
-    show_past: false,
-    show_future: true,
-    card_refresh_interval_seconds: 60,
-    columns: [],
-  }
 
   // https://lit.dev/docs/components/properties/#accessors-custom
   public setConfig(config: CardConfig): void {
@@ -79,16 +67,7 @@ export class ElectricityScheduleCard extends LitElement {
       getLovelace().setEditMode(true);
     }
 
-    this.config = {
-      ...this.defaultConfig,
-      ...config,
-      ...{
-        color_config: {
-          ...this.defaultConfig.color_config,
-          ...config.color_config ?? {}
-        }
-      }
-    };
+    this.config = applyConfigDefaults(config);
   }
 
   // https://lit.dev/docs/components/lifecycle/#reactive-update-cycle-performing
@@ -152,14 +131,16 @@ export class ElectricityScheduleCard extends LitElement {
     if (error)
       message = `${message}: ${error}`;
 
-    const errorCard = document.createElement('hui-error-card');
-    errorCard.setConfig({
-      type: 'error',
-      message,
-      origConfig: this.config,
-    });
+    // const errorCard = document.createElement('hui-error-card');
+    // errorCard.setConfig({
+    //   type: 'error',
+    //   message,
+    //   origConfig: this.config,
+    // });
 
-    return html` ${errorCard} `;
+    return html`<ha-error-card>
+      ${message}
+    </ha-error-card>`;
   }
 
   static get styles(): CSSResultGroup {
