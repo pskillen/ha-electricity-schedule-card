@@ -76,8 +76,4 @@ export type CellProps = {
   isActiveTime?: boolean;
   isActiveCost?: boolean;
   cellActive: boolean;
-  text?: string;
-
-  // color?: string;
-  // text?: string;
 }

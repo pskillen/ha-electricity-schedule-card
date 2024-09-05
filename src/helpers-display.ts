@@ -33,9 +33,9 @@ function renderTableHeaderRow(config: CardConfig, data: DisplayData): TemplateRe
       <td>${localize("headers.export")}</td>
 
       ${data.columns.map(col => {
-        const headerText = generateColumnHeader(col.name, col.maxPrice, col.minPrice)
-          
-        return html`
+          const headerText = generateColumnHeader(col.name, col.maxPrice, col.minPrice)
+
+          return html`
             <th>${headerText}</th>`;
         }
       )}
@@ -82,8 +82,27 @@ function renderTableRow(config: CardConfig, data: DisplayData, rowNum: number): 
             ? color(config, col.active_color)
             : color(config, col.inactive_color);
 
+          let text: TemplateResult | string;
+          if (cell.cellActive) {
+            if (col.power != null && col.active_text)
+              text = html`${col.active_text} ${(col.power / 1000).toFixed(config.power_decimals)} kW`;
+            else if (col.active_text)
+              text = col.active_text;
+            else if (col.power != null)
+              text = `${(col.power / 1000).toFixed(config.power_decimals)} kW`;
+            else
+              text = localize('states.active');
+          } else {
+            if (col.inactive_text)
+              text = col.inactive_text;
+            else
+              // text = `iac=${isActiveCost}, iat=${isActiveTime}, colMin=${col.minPrice}, colMax=${col.maxPrice}`;
+              text = localize('states.inactive');
+          }
+
+
           return html`
-            <td style="background-color: ${bgColor}">${cell.text}</td>`;
+            <td style="background-color: ${bgColor}">${text}</td>`;
         }
       )}
     </tr>`

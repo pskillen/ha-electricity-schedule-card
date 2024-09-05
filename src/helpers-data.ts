@@ -148,26 +148,9 @@ export function calculateTableData(hass: HomeAssistant, config: CardConfig): Dis
       else
         cellActive = false;
 
-      let text: string;
-      if (cellActive) {
-        if (col.active_text)
-          text = col.active_text;
-        if (col.power != null)
-          text = `${(col.power / 1000).toFixed(config.power_decimals)} kW`;
-        else
-          text = localize('states.active');
-      } else {
-        if (col.inactive_text)
-          text = col.inactive_text;
-        else
-          // text = `iac=${isActiveCost}, iat=${isActiveTime}, colMin=${col.minPrice}, colMax=${col.maxPrice}`;
-        text = localize('states.inactive');
-      }
-
       const cell: CellProps = {
         isActiveTime,
         isActiveCost,
-        text,
         cellActive
       };
 
