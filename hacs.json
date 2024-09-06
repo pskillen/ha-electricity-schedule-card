@@ -1,7 +1,5 @@
 {
   "name": "Electricity Schedule Card",
   "render_readme": true,
-  "content_in_root": false,
-  "filename": "electricity-schedule-card.js",
-  "zip_release": true
+  "filename": "electricity-schedule-card.js"
 }
