@@ -1,7 +1,6 @@
 {
-  "name": "electricity-schedule-card",
+  "name": "Electricity Schedule Card",
   "render_readme": true,
-  "domains": ["lovelace"],
   "content_in_root": false,
   "filename": "electricity-schedule-card.js",
   "zip_release": true
