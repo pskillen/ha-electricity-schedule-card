@@ -28,9 +28,18 @@ function renderTableHeaderRow(config: CardConfig, data: DisplayData): TemplateRe
 
   return html`
     <tr>
-      <td>${localize("headers.time")}</td>
-      <td>${localize("headers.import")}</td>
-      <td>${localize("headers.export")}</td>
+      <th colspan="3">&nbsp;</th>
+
+      ${data.columns.map(col => {
+          return html`
+            <th>${col.group}</th>`;
+        }
+      )}
+    </tr>
+    <tr>
+      <th>${localize("headers.time")}</th>
+      <th>${localize("headers.import")}</th>
+      <th>${localize("headers.export")}</th>
 
       ${data.columns.map(col => {
           const headerText = generateColumnHeader(col.name, col.maxPrice, col.minPrice)
@@ -39,8 +48,8 @@ function renderTableHeaderRow(config: CardConfig, data: DisplayData): TemplateRe
             <th>${headerText}</th>`;
         }
       )}
-
-    </tr>`
+    </tr>
+    `
 }
 
 function renderTableRow(config: CardConfig, data: DisplayData, rowNum: number): TemplateResult {

@@ -1,6 +1,7 @@
 import typescript from 'rollup-plugin-typescript2';
+import commonjs from '@rollup/plugin-commonjs';
+import nodeResolve from '@rollup/plugin-node-resolve';
 import babel from '@rollup/plugin-babel';
-import resolve from '@rollup/plugin-node-resolve';
 import json from '@rollup/plugin-json';
 import serve from 'rollup-plugin-serve';
 import terser from '@rollup/plugin-terser';
@@ -20,17 +21,16 @@ const serveopts = {
 };
 
 const plugins = [
-  resolve({
+  nodeResolve({
     extensions: ['.js', '.ts'],
     browser: true,
   }),
+  commonjs(),
   typescript(),
   json(),
   babel({
     exclude: 'node_modules/**',
   }),
-  terser(),
-  serve(serveopts),
   ignore({
     files: [...ignoreTextfieldFiles, ...ignoreSelectFiles, ...ignoreSwitchFiles].map((file) => require.resolve(file)),
   }),

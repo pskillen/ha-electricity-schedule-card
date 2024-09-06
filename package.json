@@ -9,7 +9,7 @@
     "build:types-check": "ts-interface-builder src/types.ts src/types-ha.ts",
     "rollup": "rollup -c",
     "lint": "eslint src/*.ts",
-    "watch": "npm run build:types-check && rollup -c --watch",
+    "watch": "npm run build:types-check && rollup --watch -c rollup.config.dev.js",
     "postversion": "npm run build"
   },
   "keywords": [
