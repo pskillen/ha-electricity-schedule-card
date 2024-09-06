@@ -163,17 +163,33 @@ export function calculateTableData(hass: HomeAssistant, config: CardConfig): Dis
             return cell;
         }
 
+        function calculateRowTotals(cells: CellProps[]): { totalPower: number; cost: number } {
+            const totalPower = cells.map((cell, n) => {
+                if (!cell.cellActive) return 0;
+                return columns[n].power ?? 0;
+            }).reduce((acc, val) => acc + val);
+
+
+            let cost: number;
+            // NB: div by 20 below because price in GBP, power in W, time in 30 mins
+            // GBP * 100 = p, W / 1000 = kW, hour / 2 = 30 mins -> 100/1000/2
+            if (totalPower > 0) {
+                cost = importRate?.value_inc_vat != null
+                    ? totalPower * importRate.value_inc_vat / 20
+                    : 0;
+            } else if (totalPower < 0) {
+                cost = exportRate?.value_inc_vat != null
+                    ? totalPower * exportRate.value_inc_vat / 20
+                    : 0;
+            } else {
+                cost = 0;
+            }
+
+            return {totalPower, cost}
+        }
+
         const cells: CellProps[] = columns.map(generateCellData);
-
-        const totalPower = cells.map((cell, n) => {
-            if (!cell.cellActive) return 0;
-            return columns[n].power ?? 0;
-        }).reduce((acc, val) => acc + val);
-
-        // TODO: If this is export, work it out using export rate
-        const cost = importRate?.value_inc_vat != null
-            ? totalPower * importRate?.value_inc_vat / 1000 / 2
-            : 0;
+        const {totalPower, cost} = calculateRowTotals(cells);
 
         return {
             startTime: time,
