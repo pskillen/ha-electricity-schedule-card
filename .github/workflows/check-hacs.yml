@@ -1,4 +1,4 @@
-name: pull request
+name: Check HACS config
 
 on:
   pull_request:
