@@ -16,7 +16,7 @@ import {localize} from './localize/localize';
 import {calculateTableData} from "./helpers-data";
 
 import {renderTable} from "./helpers-display";
-import {applyConfigDefaults} from "./helpers-ha";
+import {parseConfig} from "./helpers-ha";
 
 import {version as CARD_VERSION} from '../package.json';
 import {globalStyles} from "./styles";
@@ -66,7 +66,7 @@ export class ElectricityScheduleCard extends LitElement {
       getLovelace().setEditMode(true);
     }
 
-    this.config = applyConfigDefaults(config);
+    this.config = parseConfig(config);
   }
 
   // https://lit.dev/docs/components/lifecycle/#reactive-update-cycle-performing

@@ -30,8 +30,16 @@ export interface ElectricitySupplyConfig {
   low_cost: number;
 }
 
+export interface EnabledEntityConfig {
+  entity_name: string;
+  enabled_value?: string;
+}
+
 export interface ColumnConfig {
   name: string;
+  group?: string;
+  enabled_entity?: string | EnabledEntityConfig;
+  enabled_entities?: (string | EnabledEntityConfig)[];
   time_entity?: string;
   time_entities?: string[];
   active_color?: string;

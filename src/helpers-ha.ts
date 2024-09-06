@@ -4,7 +4,7 @@ import {HassEntity} from "home-assistant-js-websocket";
 import {OctopusRatesEntryAttributes} from "./types-sensors";
 import {CardConfig} from "./types-card";
 
-export function applyConfigDefaults(config: CardConfig) {
+export function parseConfig(config: CardConfig) {
   const defaultConfig: CardConfig = {
     type: 'custom:electricity-schedule-card',
     name: 'Electricity schedule',
@@ -31,13 +31,43 @@ export function applyConfigDefaults(config: CardConfig) {
     price_unit: "p",
     show_past: false,
     show_future: true,
-    card_refresh_interval_seconds: 60,
+    card_refresh_interval_seconds: 10,
     columns: [],
   }
+
+  // sanitise the column config
+  const columns = config.columns.map(column => {
+     const time_entities = column.time_entity
+         ? [column.time_entity]
+         : column.time_entities;
+
+     let enabled_entities = column.enabled_entity ? [column.enabled_entity] : column.enabled_entities;
+     enabled_entities = enabled_entities?.map(entity => {
+         let entity_name: string, enabled_value: string | undefined;
+         if (typeof entity === "string") {
+             entity_name = entity;
+             enabled_value = "on";
+         } else {
+             entity_name = entity.entity_name;
+             enabled_value = entity.enabled_value;
+         }
+
+         return { entity_name, enabled_value }
+     });
+
+     return {
+       ...column,
+       time_entity: undefined,
+       time_entities,
+       enabled_entity: undefined,
+       enabled_entities
+     }
+    });
 
   return {
     ...defaultConfig,
     ...config,
+    columns,
     ...{
       import_meter: {
         ...defaultConfig.import_meter,

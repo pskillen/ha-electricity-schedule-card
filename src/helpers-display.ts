@@ -27,20 +27,53 @@ function renderTableHeaderRow(config: CardConfig, data: DisplayData): TemplateRe
   }
 
   return html`
-    <tr>
-      <td>${localize("headers.time")}</td>
-      <td>${localize("headers.import")}</td>
-      <td>${localize("headers.export")}</td>
+      <tr>
+          <th colspan="3">&nbsp;</th>
 
-      ${data.columns.map(col => {
-          const headerText = generateColumnHeader(col.name, col.maxPrice, col.minPrice)
+          ${(() => {
+              const groupedHeaders: TemplateResult[] = [];
+              let currentGroup: string | undefined = '';
+              let colspan = 0;
 
-          return html`
-            <th>${headerText}</th>`;
-        }
-      )}
+              data.columns.forEach((col, index) => {
+                  if (col.group === currentGroup) {
+                      colspan++; // Increment the colspan for the same group
+                  } else {
+                      if (colspan > 0) {
+                          groupedHeaders.push(html`<th colspan="${colspan}">${currentGroup}</th>`);
+                      }
+                      currentGroup = col.group;
+                      colspan = 1; // Start new colspan
+                  }
 
-    </tr>`
+                  // Handle the last column group
+                  if (index === data.columns.length - 1) {
+                      groupedHeaders.push(html`<th colspan="${colspan}">${currentGroup}</th>`);
+                  }
+              });
+
+              return groupedHeaders;
+          })()}
+          
+          <th colspan="2">Total</th>
+      </tr>
+      <tr>
+          <th>${localize("headers.time")}</th>
+          <th>${localize("headers.import")}</th>
+          <th>${localize("headers.export")}</th>
+
+          ${data.columns.map(col => {
+              const headerText = generateColumnHeader(col.name, col.maxPrice, col.minPrice)
+
+              return html`
+                  <th>${headerText}</th>`;
+              }
+          )}
+          
+          <th>Power</th>
+          <th>Cost</th>
+      </tr>
+  `
 }
 
 function renderTableRow(config: CardConfig, data: DisplayData, rowNum: number): TemplateResult {
@@ -105,6 +138,9 @@ function renderTableRow(config: CardConfig, data: DisplayData, rowNum: number): 
             <td style="background-color: ${bgColor}">${text}</td>`;
         }
       )}
+
+        <td style="color: ${color(config, row.totalPower > 0 ? 'high' : 'negative')}">${(row.totalPower/ 1000).toFixed(config.power_decimals)}kW</td>
+        <td style="color: ${color(config, row.cost > 0 ? 'high' : 'negative')}">${row.cost.toFixed(config.price_decimals)}${config.price_unit}</td>
     </tr>`
 }
 
