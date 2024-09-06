@@ -5,5 +5,8 @@ lovelace/
 # Node and NPM files
 node_modules/
 
+# ts-interface-builder files
+src/*-ti.ts
+
 # Secrets
 .env

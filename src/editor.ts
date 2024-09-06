@@ -1,9 +1,10 @@
 import {css, CSSResultGroup, html, LitElement, TemplateResult} from 'lit';
+import {customElement, property, state} from 'lit/decorators.js';
+import {ScopedRegistryHost} from '@lit-labs/scoped-registry-mixin';
+
 import {fireEvent, HomeAssistant, LovelaceCardEditor} from 'custom-card-helpers';
 
-import {ScopedRegistryHost} from '@lit-labs/scoped-registry-mixin';
-import {CardConfig} from './types';
-import {customElement, property, state} from 'lit/decorators.js';
+import {CardConfig} from './types-card';
 
 import { formfieldDefinition } from '../elements/formfield';
 import { selectDefinition } from '../elements/select';

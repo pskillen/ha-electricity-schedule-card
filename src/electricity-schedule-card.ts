@@ -1,4 +1,4 @@
-import {css, CSSResultGroup, html, LitElement, PropertyValues, TemplateResult} from 'lit';
+import {CSSResultGroup, html, LitElement, PropertyValues, TemplateResult} from 'lit';
 import {customElement, property, state} from 'lit/decorators.js';
 import {
   ActionHandlerEvent,
@@ -9,10 +9,17 @@ import {
   HomeAssistant,
   LovelaceCardEditor,
 } from 'custom-card-helpers';
-import type {CardConfig} from './types';
+
+import {CardConfig} from './types-card';
 import {actionHandler} from './action-handler-directive';
-import {version as CARD_VERSION} from '../package.json';
 import {localize} from './localize/localize';
+import {calculateTableData} from "./helpers-data";
+
+import {renderTable} from "./helpers-display";
+import {applyConfigDefaults} from "./helpers-ha";
+
+import {version as CARD_VERSION} from '../package.json';
+import {globalStyles} from "./styles";
 
 /* eslint no-console: 0 */
 console.info(
@@ -21,7 +28,7 @@ console.info(
   'color: white; font-weight: bold; background: dimgray',
 );
 
-// This puts your card into the UI card picker dialog
+// Info to display card in the UI card picker dialog
 (window as any).customCards = (window as any).customCards || [];
 (window as any).customCards.push({
   type: 'electricity-schedule-card',
@@ -33,7 +40,6 @@ console.info(
 export class ElectricityScheduleCard extends LitElement {
   public static async getConfigElement(): Promise<LovelaceCardEditor> {
     await import('./editor');
-    // @ts-ignore
     return document.createElement('electricity-schedule-card-editor');
   }
 
@@ -48,6 +54,7 @@ export class ElectricityScheduleCard extends LitElement {
 
   @state() private config!: CardConfig;
 
+
   // https://lit.dev/docs/components/properties/#accessors-custom
   public setConfig(config: CardConfig): void {
     // TODO Check for required fields and that they are of the proper format
@@ -59,10 +66,7 @@ export class ElectricityScheduleCard extends LitElement {
       getLovelace().setEditMode(true);
     }
 
-    this.config = {
-      name: 'Electricity Schedule',
-      ...config,
-    };
+    this.config = applyConfigDefaults(config);
   }
 
   // https://lit.dev/docs/components/lifecycle/#reactive-update-cycle-performing
@@ -75,11 +79,12 @@ export class ElectricityScheduleCard extends LitElement {
   }
 
   // https://lit.dev/docs/components/rendering/
-  protected render(): TemplateResult | void {
+  protected render(): TemplateResult {
     // TODO Check for stateObj or other necessary things and render a warning if missing
     if (!this.hass || !this.config) {
       return this._showWarning('Not initialized');
     }
+
     if (this.config.show_warning) {
       return this._showWarning(localize('common.show_warning'));
     }
@@ -88,18 +93,26 @@ export class ElectricityScheduleCard extends LitElement {
       return this._showError(localize('common.show_error'));
     }
 
-    return html`
-      <ha-card
-        .header=${this.config.name}
-        @action=${this._handleAction}
-        .actionHandler=${actionHandler({
-          hasHold: hasAction(this.config.hold_action),
-          hasDoubleClick: hasAction(this.config.double_tap_action),
-        })}
-        tabindex="0"
-        .label=${`Electricity Schedule Card: ${this.config.entity || 'No Entity Defined'}`}
-      ></ha-card>
-    `;
+    try {
+      const displayData = calculateTableData(this.hass, this.config);
+
+      return html`
+        <ha-card
+          .header=${this.config.name}
+          @action=${this._handleAction}
+          .actionHandler=${actionHandler({
+            hasHold: hasAction(this.config.hold_action),
+            hasDoubleClick: hasAction(this.config.double_tap_action),
+          })}
+          tabindex="0"
+          .label=${`Electricity Schedule Card: ${this.config.entity || 'No Entity Defined'}`}
+        >
+          ${renderTable(this.config, displayData)}
+        </ha-card>
+      `;
+    } catch (error) {
+      return this._showError(localize('common.show_error'), error);
+    }
   }
 
   private _handleAction(ev: ActionHandlerEvent): void {
@@ -109,22 +122,29 @@ export class ElectricityScheduleCard extends LitElement {
   }
 
   private _showWarning(warning: string): TemplateResult {
-    return html`<hui-warning>${warning}</hui-warning> `;
+    return html`
+      <hui-warning>${warning}</hui-warning> `;
   }
 
-  private _showError(error: string): TemplateResult {
-    const errorCard = document.createElement('hui-error-card');
-    errorCard.setConfig({
-      type: 'error',
-      error,
-      origConfig: this.config,
-    });
+  private _showError(message: string, error?: any): TemplateResult {
+    if (error)
+      message = `${message}: ${error}`;
 
-    return html` ${errorCard} `;
+    // const errorCard = document.createElement('hui-error-card');
+    // errorCard.setConfig({
+    //   type: 'error',
+    //   message,
+    //   origConfig: this.config,
+    // });
+
+    return html`
+      <ha-error-card>
+        ${message}
+      </ha-error-card>`;
   }
 
-  // https://lit.dev/docs/components/styles/
   static get styles(): CSSResultGroup {
-    return css``;
+    return globalStyles;
   }
+
 }

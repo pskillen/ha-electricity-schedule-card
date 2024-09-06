@@ -4,5 +4,14 @@
     "invalid_configuration": "Invalid configuration",
     "show_warning": "Show Warning",
     "show_error": "Show Error"
+  },
+  "headers": {
+    "time": "Time",
+    "import": "Import",
+    "export": "Export"
+  },
+  "states": {
+    "active": "On",
+    "inactive": ""
   }
 }
